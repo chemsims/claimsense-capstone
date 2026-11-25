@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "DraftState": {
+      "enum": [
+        "ACTIVE",
+        "SUPERSEDED",
+        "CONFIRMED",
+        "OVERRIDDEN"
+      ],
+      "title": "DraftState",
+      "type": "string"
+    },
+    "WriteOutcome": {
+      "enum": [
+        "CREATED",
+        "REPLAYED"
+      ],
+      "title": "WriteOutcome",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "recommendation_id": {
+      "title": "Recommendation Id",
+      "type": "string"
+    },
+    "claim_id": {
+      "pattern": "^CLM-\\d{4}-\\d{4}$",
+      "title": "Claim Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "state": {
+      "$ref": "#/$defs/DraftState"
+    },
+    "outcome": {
+      "$ref": "#/$defs/WriteOutcome"
+    },
+    "superseded_recommendation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Superseded Recommendation Id"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "recommendation_id",
+    "claim_id",
+    "version",
+    "state",
+    "outcome",
+    "created_at"
+  ],
+  "title": "PutRecommendationResponse",
+  "type": "object"
+}

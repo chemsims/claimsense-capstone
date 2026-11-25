@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "ActingUser": {
+      "additionalProperties": false,
+      "description": "Identity of the human the call is made on behalf of (OAuth2 on-behalf-of).\n\nComes from the verified token, never from the request body or the model.",
+      "properties": {
+        "user_id": {
+          "pattern": "^[a-z][a-z0-9_.-]{1,31}$",
+          "title": "User Id",
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/Role"
+          },
+          "title": "Roles",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "token_subject": {
+          "description": "'sub' claim of the verified token",
+          "minLength": 1,
+          "title": "Token Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "roles",
+        "token_subject"
+      ],
+      "title": "ActingUser",
+      "type": "object"
+    },
+    "RequestMeta": {
+      "additionalProperties": false,
+      "description": "Carried on every call to a client system, for tracing and the audit record.",
+      "properties": {
+        "request_id": {
+          "description": "UUID4 generated per call",
+          "minLength": 8,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "acting_user": {
+          "$ref": "#/$defs/ActingUser"
+        },
+        "sent_at": {
+          "format": "date-time",
+          "title": "Sent At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "acting_user",
+        "sent_at"
+      ],
+      "title": "RequestMeta",
+      "type": "object"
+    },
+    "Role": {
+      "enum": [
+        "adjuster",
+        "senior_adjuster",
+        "siu_investigator",
+        "claims_supervisor"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/RequestMeta"
+    },
+    "document_id": {
+      "pattern": "^DOC-\\d{5}$",
+      "title": "Document Id",
+      "type": "string"
+    },
+    "expected_claim_id": {
+      "description": "Access layer rejects if the doc belongs elsewhere",
+      "pattern": "^CLM-\\d{4}-\\d{4}$",
+      "title": "Expected Claim Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "meta",
+    "document_id",
+    "expected_claim_id"
+  ],
+  "title": "GetDocumentTextRequest",
+  "type": "object"
+}

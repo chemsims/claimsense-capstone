@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "description": "Source of truth for entitlement. Our access layer calls this BEFORE GetClaim and before\nany agent runs. A user is entitled if they are the assigned adjuster, or hold a role listed\nin escalation_roles for this claim.",
+  "properties": {
+    "claim_id": {
+      "pattern": "^CLM-\\d{4}-\\d{4}$",
+      "title": "Claim Id",
+      "type": "string"
+    },
+    "assigned_adjuster": {
+      "pattern": "^[a-z][a-z0-9_.-]{1,31}$",
+      "title": "Assigned Adjuster",
+      "type": "string"
+    },
+    "escalation_roles": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Escalation Roles",
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "claim_id",
+    "assigned_adjuster"
+  ],
+  "title": "GetAssignmentResponse",
+  "type": "object"
+}

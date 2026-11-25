@@ -1,0 +1,9 @@
+user_id,display_name,roles,notes
+alice,Alice (synthetic),adjuster,assigned to 6 claims
+bob,Bob (synthetic),adjuster,assigned to 3 claims
+carol,Carol (synthetic),adjuster,assigned to 3 claims
+david,David (synthetic),adjuster,assigned to 6 claims
+eve,Eve (synthetic),senior_adjuster,assigned to 2 escalated claims
+sam,Sam (synthetic),siu_investigator,sees claims routed to SIU
+pat,Pat (synthetic),claims_supervisor,reviews co-pilot output; sees all claims read-only
+mallory,Mallory (synthetic),adjuster,assigned to nothing; used for refusal tests

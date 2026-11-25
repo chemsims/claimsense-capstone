@@ -1,0 +1,314 @@
+{
+  "$defs": {
+    "ActingUser": {
+      "additionalProperties": false,
+      "description": "Identity of the human the call is made on behalf of (OAuth2 on-behalf-of).\n\nComes from the verified token, never from the request body or the model.",
+      "properties": {
+        "user_id": {
+          "pattern": "^[a-z][a-z0-9_.-]{1,31}$",
+          "title": "User Id",
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/$defs/Role"
+          },
+          "title": "Roles",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "token_subject": {
+          "description": "'sub' claim of the verified token",
+          "minLength": 1,
+          "title": "Token Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "roles",
+        "token_subject"
+      ],
+      "title": "ActingUser",
+      "type": "object"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "pattern": "^(clause|document|claim_field|policy_field)$",
+          "title": "Kind",
+          "type": "string"
+        },
+        "ref": {
+          "description": "clause_id, document_id or field name",
+          "minLength": 1,
+          "title": "Ref",
+          "type": "string"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        }
+      },
+      "required": [
+        "kind",
+        "ref"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "Decision": {
+      "enum": [
+        "APPROVE",
+        "DENY",
+        "FLAG",
+        "ROUTE_SIU"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "description": "A deterministic fact. provenance is always CODE.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance",
+          "default": "code"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "Judgment": {
+      "additionalProperties": false,
+      "description": "A model judgment. Must cite evidence; an uncited judgment is rejected.",
+      "properties": {
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "answer": {
+          "title": "Answer",
+          "type": "string"
+        },
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "minItems": 1,
+          "title": "Citations",
+          "type": "array"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance",
+          "default": "model"
+        }
+      },
+      "required": [
+        "question",
+        "answer",
+        "citations"
+      ],
+      "title": "Judgment",
+      "type": "object"
+    },
+    "Provenance": {
+      "enum": [
+        "code",
+        "model"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "Recommendation": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "pattern": "^CLM-\\d{4}-\\d{4}$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "reasoning": {
+          "maxLength": 4000,
+          "minLength": 20,
+          "title": "Reasoning",
+          "type": "string"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "title": "Facts",
+          "type": "array"
+        },
+        "judgments": {
+          "items": {
+            "$ref": "#/$defs/Judgment"
+          },
+          "title": "Judgments",
+          "type": "array"
+        },
+        "estimated_payout_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CODE: repair - deductible, capped at ACV",
+          "title": "Estimated Payout Usd"
+        },
+        "clause_ids_retrieved": {
+          "items": {
+            "pattern": "^[A-Z]{2,5}-\\d{1,2}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "title": "Clause Ids Retrieved",
+          "type": "array"
+        },
+        "document_ids_read": {
+          "items": {
+            "pattern": "^DOC-\\d{5}$",
+            "type": "string"
+          },
+          "title": "Document Ids Read",
+          "type": "array"
+        },
+        "document_ids_missing": {
+          "description": "e.g. OCR pending; forces FLAG",
+          "items": {
+            "pattern": "^DOC-\\d{5}$",
+            "type": "string"
+          },
+          "title": "Document Ids Missing",
+          "type": "array"
+        },
+        "requires_adjuster_confirmation": {
+          "default": true,
+          "title": "Requires Adjuster Confirmation",
+          "type": "boolean"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "pipeline_version": {
+          "title": "Pipeline Version",
+          "type": "string"
+        },
+        "input_digest": {
+          "description": "sha256 of claim etag + policy etag + document hashes",
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Input Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "decision",
+        "reasoning",
+        "facts",
+        "judgments",
+        "clause_ids_retrieved",
+        "document_ids_read",
+        "document_ids_missing",
+        "model_version",
+        "pipeline_version",
+        "input_digest"
+      ],
+      "title": "Recommendation",
+      "type": "object"
+    },
+    "RequestMeta": {
+      "additionalProperties": false,
+      "description": "Carried on every call to a client system, for tracing and the audit record.",
+      "properties": {
+        "request_id": {
+          "description": "UUID4 generated per call",
+          "minLength": 8,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "acting_user": {
+          "$ref": "#/$defs/ActingUser"
+        },
+        "sent_at": {
+          "format": "date-time",
+          "title": "Sent At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "acting_user",
+        "sent_at"
+      ],
+      "title": "RequestMeta",
+      "type": "object"
+    },
+    "Role": {
+      "enum": [
+        "adjuster",
+        "senior_adjuster",
+        "siu_investigator",
+        "claims_supervisor"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/RequestMeta"
+    },
+    "idempotency_key": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "recommendation": {
+      "$ref": "#/$defs/Recommendation"
+    }
+  },
+  "required": [
+    "meta",
+    "idempotency_key",
+    "recommendation"
+  ],
+  "title": "PutRecommendationRequest",
+  "type": "object"
+}

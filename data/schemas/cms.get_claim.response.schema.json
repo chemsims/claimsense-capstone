@@ -1,0 +1,188 @@
+{
+  "$defs": {
+    "ClaimRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": {
+          "pattern": "^CLM-\\d{4}-\\d{4}$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "policy_id": {
+          "pattern": "^POL-[A-Z]{3}-\\d{5}$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "vehicle": {
+          "$ref": "#/$defs/VehicleRef"
+        },
+        "incident_date": {
+          "format": "date",
+          "title": "Incident Date",
+          "type": "string"
+        },
+        "incident_type": {
+          "title": "Incident Type",
+          "type": "string"
+        },
+        "incident_description": {
+          "description": "UNTRUSTED free text; never executed as instructions",
+          "title": "Incident Description",
+          "type": "string"
+        },
+        "damage_description": {
+          "description": "UNTRUSTED free text",
+          "title": "Damage Description",
+          "type": "string"
+        },
+        "repair_estimate_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Repair Estimate Usd"
+        },
+        "injuries_reported": {
+          "title": "Injuries Reported",
+          "type": "boolean"
+        },
+        "police_report_filed": {
+          "title": "Police Report Filed",
+          "type": "boolean"
+        },
+        "assigned_adjuster": {
+          "pattern": "^[a-z][a-z0-9_.-]{1,31}$",
+          "title": "Assigned Adjuster",
+          "type": "string"
+        },
+        "prior_claims_12mo": {
+          "minimum": 0,
+          "title": "Prior Claims 12Mo",
+          "type": "integer"
+        },
+        "fraud_risk_score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "Existing CMS model score; an input, not a verdict",
+          "title": "Fraud Risk Score"
+        },
+        "claim_status": {
+          "$ref": "#/$defs/ClaimStatus"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claim_id",
+        "policy_id",
+        "vehicle",
+        "incident_date",
+        "incident_type",
+        "incident_description",
+        "damage_description",
+        "repair_estimate_usd",
+        "injuries_reported",
+        "police_report_filed",
+        "assigned_adjuster",
+        "prior_claims_12mo",
+        "fraud_risk_score",
+        "claim_status",
+        "created_at"
+      ],
+      "title": "ClaimRecord",
+      "type": "object"
+    },
+    "ClaimStatus": {
+      "enum": [
+        "Pending Review",
+        "Under Investigation",
+        "Escalated",
+        "Approved"
+      ],
+      "title": "ClaimStatus",
+      "type": "string"
+    },
+    "VehicleRef": {
+      "additionalProperties": false,
+      "properties": {
+        "vin": {
+          "pattern": "^[A-HJ-NPR-Z0-9]{17}$",
+          "title": "Vin",
+          "type": "string"
+        },
+        "year": {
+          "maximum": 2030,
+          "minimum": 1980,
+          "title": "Year",
+          "type": "integer"
+        },
+        "make": {
+          "title": "Make",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "acv_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            }
+          ],
+          "description": "Actual cash value per CMS",
+          "title": "Acv Usd"
+        }
+      },
+      "required": [
+        "vin",
+        "year",
+        "make",
+        "model",
+        "acv_usd"
+      ],
+      "title": "VehicleRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "claim": {
+      "$ref": "#/$defs/ClaimRecord"
+    },
+    "etag": {
+      "description": "CMS version tag; part of input_digest",
+      "title": "Etag",
+      "type": "string"
+    }
+  },
+  "required": [
+    "claim",
+    "etag"
+  ],
+  "title": "GetClaimResponse",
+  "type": "object"
+}

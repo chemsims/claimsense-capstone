@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  ClaimSense capstone, Milestone 2 environment. Storage, identity, secrets, audit and logging
+  for the co-pilot. No compute yet (the ECS service is added in Milestone 3).
+  Expected cost at rest: about $0.40/month (Secrets Manager); everything else is pay-per-use.
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging]
+  BudgetEmail:
+    Type: String
+    Description: Email for the monthly budget alert (USD 20)
+
+Resources:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub claimsense-${Env}-data-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration: { Status: Enabled }
+      Tags: [{ Key: project, Value: claimsense }, { Key: data, Value: synthetic-only }]
+
+  DataBucketTlsOnly:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DataBucket
+      PolicyDocument:
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt DataBucket.Arn, !Sub "${DataBucket.Arn}/*"]
+            Condition: { Bool: { "aws:SecureTransport": "false" } }
+
+  ImageRepo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub claimsense-${Env}
+      ImageScanningConfiguration: { ScanOnPush: true }
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"keep last 20","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":20},"action":{"type":"expire"}}]}'
+
+  AuditTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub claimsense-${Env}-audit
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: request_id, AttributeType: S }
+        - { AttributeName: user_id, AttributeType: S }
+        - { AttributeName: at, AttributeType: S }
+      KeySchema:
+        - { AttributeName: request_id, KeyType: HASH }
+      GlobalSecondaryIndexes:
+        - IndexName: by-user
+          KeySchema:
+            - { AttributeName: user_id, KeyType: HASH }
+            - { AttributeName: at, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      SSESpecification: { SSEEnabled: true }
+      DeletionProtectionEnabled: true
+
+  OpenAiKey:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub claimsense/${Env}/openai-api-key
+      Description: OpenAI API key. Set the real value in the console after deploy; never in code.
+      SecretString: '{"OPENAI_API_KEY":"set-me-in-console"}'
+
+  AppLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /claimsense/${Env}/app
+      RetentionInDays: 30
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub claimsense-${Env}-users
+      AdminCreateUserConfig: { AllowAdminCreateUserOnly: true }
+      Policies:
+        PasswordPolicy: { MinimumLength: 12, RequireNumbers: true, RequireSymbols: true, RequireUppercase: true, RequireLowercase: true }
+      Schema:
+        - { Name: email, AttributeDataType: String, Required: true, Mutable: true }
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: claimsense-web
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows: [ALLOW_USER_SRP_AUTH, ALLOW_REFRESH_TOKEN_AUTH]
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      TokenValidityUnits: { AccessToken: minutes, IdToken: minutes }
+
+  RoleAdjuster:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: { GroupName: adjuster, UserPoolId: !Ref UserPool }
+  RoleSenior:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: { GroupName: senior_adjuster, UserPoolId: !Ref UserPool }
+  RoleSiu:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: { GroupName: siu_investigator, UserPoolId: !Ref UserPool }
+  RoleSupervisor:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties: { GroupName: claims_supervisor, UserPoolId: !Ref UserPool }
+
+  # Least-privilege role the Milestone 3 ECS task will assume.
+  AppTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub claimsense-${Env}-app
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ecs-tasks.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: app-least-privilege
+          PolicyDocument:
+            Statement:
+              - Sid: ReadData
+                Effect: Allow
+                Action: [s3:GetObject, s3:ListBucket]
+                Resource: [!GetAtt DataBucket.Arn, !Sub "${DataBucket.Arn}/*"]
+              - Sid: AuditAppendOnly
+                Effect: Allow
+                Action: [dynamodb:PutItem, dynamodb:GetItem, dynamodb:Query]
+                Resource: [!GetAtt AuditTable.Arn, !Sub "${AuditTable.Arn}/index/*"]
+              - Sid: ReadOpenAiKey
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref OpenAiKey
+              - Sid: WriteLogs
+                Effect: Allow
+                Action: [logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub "${AppLogs.Arn}:*"
+
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: !Sub claimsense-${Env}-monthly
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit: { Amount: 20, Unit: USD }
+      NotificationsWithSubscribers:
+        - Notification: { NotificationType: ACTUAL, ComparisonOperator: GREATER_THAN, Threshold: 80 }
+          Subscribers: [{ SubscriptionType: EMAIL, Address: !Ref BudgetEmail }]
+
+Outputs:
+  DataBucketName: { Value: !Ref DataBucket }
+  ImageRepoUri: { Value: !GetAtt ImageRepo.RepositoryUri }
+  AuditTableName: { Value: !Ref AuditTable }
+  OpenAiSecretArn: { Value: !Ref OpenAiKey }
+  UserPoolId: { Value: !Ref UserPool }
+  UserPoolClientId: { Value: !Ref UserPoolClient }
+  AppTaskRoleArn: { Value: !GetAtt AppTaskRole.Arn }
+  LogGroup: { Value: !Ref AppLogs }

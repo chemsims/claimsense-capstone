@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "OcrStatus": {
+      "enum": [
+        "Completed",
+        "Pending"
+      ],
+      "title": "OcrStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "document_id": {
+      "pattern": "^DOC-\\d{5}$",
+      "title": "Document Id",
+      "type": "string"
+    },
+    "claim_id": {
+      "pattern": "^CLM-\\d{4}-\\d{4}$",
+      "title": "Claim Id",
+      "type": "string"
+    },
+    "ocr_status": {
+      "$ref": "#/$defs/OcrStatus"
+    },
+    "text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "UNTRUSTED. None while OCR is pending",
+      "title": "Text"
+    },
+    "sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Sha256"
+    },
+    "injection_flags": {
+      "default": [],
+      "description": "Set by our input guardrail, not by the document store",
+      "items": {
+        "type": "string"
+      },
+      "title": "Injection Flags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "document_id",
+    "claim_id",
+    "ocr_status",
+    "text",
+    "sha256"
+  ],
+  "title": "DocumentText",
+  "type": "object"
+}

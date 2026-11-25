@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "ClauseHit": {
+      "additionalProperties": false,
+      "properties": {
+        "clause_id": {
+          "pattern": "^[A-Z]{2,5}-\\d{1,2}(\\.\\d{1,2})?$",
+          "title": "Clause Id",
+          "type": "string"
+        },
+        "policy_form_id": {
+          "title": "Policy Form Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ClauseKind"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "score": {
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "clause_id",
+        "policy_form_id",
+        "kind",
+        "title",
+        "text",
+        "score"
+      ],
+      "title": "ClauseHit",
+      "type": "object"
+    },
+    "ClauseKind": {
+      "enum": [
+        "insuring",
+        "exclusion",
+        "condition",
+        "definition"
+      ],
+      "title": "ClauseKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "hits": {
+      "items": {
+        "$ref": "#/$defs/ClauseHit"
+      },
+      "title": "Hits",
+      "type": "array"
+    },
+    "index_version": {
+      "description": "Corpus version; part of input_digest",
+      "title": "Index Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "hits",
+    "index_version"
+  ],
+  "title": "SearchClausesResponse",
+  "type": "object"
+}

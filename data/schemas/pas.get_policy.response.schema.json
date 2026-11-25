@@ -1,0 +1,199 @@
+{
+  "$defs": {
+    "CoverageType": {
+      "enum": [
+        "Full Coverage",
+        "Liability Only"
+      ],
+      "title": "CoverageType",
+      "type": "string"
+    },
+    "LiabilityLimit": {
+      "additionalProperties": false,
+      "properties": {
+        "per_person_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Per Person Usd"
+        },
+        "per_accident_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Per Accident Usd"
+        }
+      },
+      "required": [
+        "per_person_usd",
+        "per_accident_usd"
+      ],
+      "title": "LiabilityLimit",
+      "type": "object"
+    },
+    "PolicyRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "policy_id": {
+          "pattern": "^POL-[A-Z]{3}-\\d{5}$",
+          "title": "Policy Id",
+          "type": "string"
+        },
+        "vehicle_vin": {
+          "pattern": "^[A-HJ-NPR-Z0-9]{17}$",
+          "title": "Vehicle Vin",
+          "type": "string"
+        },
+        "vehicle_acv_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Vehicle Acv Usd"
+        },
+        "coverage_type": {
+          "$ref": "#/$defs/CoverageType"
+        },
+        "collision_coverage": {
+          "title": "Collision Coverage",
+          "type": "boolean"
+        },
+        "comprehensive_coverage": {
+          "title": "Comprehensive Coverage",
+          "type": "boolean"
+        },
+        "collision_deductible_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "None when not covered (CSV 'N/A')",
+          "title": "Collision Deductible Usd"
+        },
+        "comprehensive_deductible_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Comprehensive Deductible Usd"
+        },
+        "liability_limit": {
+          "$ref": "#/$defs/LiabilityLimit"
+        },
+        "medpay_limit_usd": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+              "type": "string"
+            }
+          ],
+          "title": "Medpay Limit Usd"
+        },
+        "policy_status": {
+          "$ref": "#/$defs/PolicyStatus",
+          "description": "Display field only. NEVER used to decide coverage: code uses the dates (claim CLM-2024-2822 says Active but the loss is after policy_end)."
+        },
+        "policy_start": {
+          "format": "date",
+          "title": "Policy Start",
+          "type": "string"
+        },
+        "policy_end": {
+          "description": "Inclusive (working assumption, charter open question 3)",
+          "format": "date",
+          "title": "Policy End",
+          "type": "string"
+        },
+        "policy_form_id": {
+          "default": "TXA-PAP-2023",
+          "description": "Which clause set applies",
+          "title": "Policy Form Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy_id",
+        "vehicle_vin",
+        "vehicle_acv_usd",
+        "coverage_type",
+        "collision_coverage",
+        "comprehensive_coverage",
+        "collision_deductible_usd",
+        "comprehensive_deductible_usd",
+        "liability_limit",
+        "medpay_limit_usd",
+        "policy_status",
+        "policy_start",
+        "policy_end"
+      ],
+      "title": "PolicyRecord",
+      "type": "object"
+    },
+    "PolicyStatus": {
+      "enum": [
+        "Active",
+        "Expired"
+      ],
+      "title": "PolicyStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "policy": {
+      "$ref": "#/$defs/PolicyRecord"
+    },
+    "etag": {
+      "title": "Etag",
+      "type": "string"
+    }
+  },
+  "required": [
+    "policy",
+    "etag"
+  ],
+  "title": "GetPolicyResponse",
+  "type": "object"
+}

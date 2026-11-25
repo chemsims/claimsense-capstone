@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "DocumentMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "pattern": "^DOC-\\d{5}$",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "claim_id": {
+          "pattern": "^CLM-\\d{4}-\\d{4}$",
+          "title": "Claim Id",
+          "type": "string"
+        },
+        "document_type": {
+          "$ref": "#/$defs/DocumentType"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "upload_date": {
+          "format": "date",
+          "title": "Upload Date",
+          "type": "string"
+        },
+        "page_count": {
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Page Count",
+          "type": "integer"
+        },
+        "ocr_status": {
+          "$ref": "#/$defs/OcrStatus"
+        },
+        "uploaded_by": {
+          "pattern": "^[a-z][a-z0-9_.-]{1,31}$",
+          "title": "Uploaded By",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "claim_id",
+        "document_type",
+        "description",
+        "upload_date",
+        "page_count",
+        "ocr_status",
+        "uploaded_by"
+      ],
+      "title": "DocumentMeta",
+      "type": "object"
+    },
+    "DocumentType": {
+      "enum": [
+        "FNOL_FORM",
+        "DAMAGE_PHOTOS",
+        "REPAIR_ESTIMATE",
+        "WITNESS_STATEMENT",
+        "MEDICAL_REPORT",
+        "RENTAL_RECEIPT",
+        "POLICE_REPORT"
+      ],
+      "title": "DocumentType",
+      "type": "string"
+    },
+    "OcrStatus": {
+      "enum": [
+        "Completed",
+        "Pending"
+      ],
+      "title": "OcrStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "claim_id": {
+      "pattern": "^CLM-\\d{4}-\\d{4}$",
+      "title": "Claim Id",
+      "type": "string"
+    },
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/DocumentMeta"
+      },
+      "title": "Documents",
+      "type": "array"
+    }
+  },
+  "required": [
+    "claim_id",
+    "documents"
+  ],
+  "title": "ListDocumentsResponse",
+  "type": "object"
+}

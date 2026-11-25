@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "AccessResult": {
+      "enum": [
+        "granted",
+        "denied",
+        "error"
+      ],
+      "title": "AccessResult",
+      "type": "string"
+    },
+    "AuditAction": {
+      "enum": [
+        "get_decision",
+        "cms.get_claim",
+        "cms.get_assignment",
+        "cms.put_recommendation",
+        "pas.get_policy",
+        "pas.search_clauses",
+        "docstore.list_documents",
+        "docstore.get_document_text"
+      ],
+      "title": "AuditAction",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+    },
+    "user_id": {
+      "pattern": "^[a-z][a-z0-9_.-]{1,31}$",
+      "title": "User Id",
+      "type": "string"
+    },
+    "action": {
+      "$ref": "#/$defs/AuditAction"
+    },
+    "resource": {
+      "title": "Resource",
+      "type": "string"
+    },
+    "result": {
+      "$ref": "#/$defs/AccessResult"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "pipeline_version": {
+      "title": "Pipeline Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "at",
+    "user_id",
+    "action",
+    "resource",
+    "result",
+    "pipeline_version"
+  ],
+  "title": "AuditRecord",
+  "type": "object"
+}
